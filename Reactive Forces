@@ -1,0 +1,105 @@
+echo "# Newtons-Third-Law" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/Spulloa/Newtons-Third-Law.git
+git push -u origin main
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+class body(object):
+    # 11/22/21 ",
+    ''' A class of body in kinematics '''
+    def __init__(self): 
+
+        ### basics ",
+        self.apply_force    = np.zeros(3) 
+        self.position       = np.zeros(3) 
+        self.mass           = 1. 
+        self.velocity       = np.zeros(3) 
+        self.size           = 0. 
+        self.air_resistence = 0. 
+
+    def on_ramp(self, Θ = 0., static_friction=0., kinetic_friction=0.): 
+
+        Θ = np.pi*Θ/180 
+        self.e_tangent = np.array([ np.cos(Θ), np.sin(Θ), 0.]) 
+        self.e_normal  = np.array([-np.sin(Θ), np.cos(Θ), 0.]) 
+        self.static_friction  = static_friction 
+        self.kinetic_friction = kinetic_friction 
+
+        return None
+
+    def force_response(self, acting_force): 
+
+        ### computes force normal to forces ",
+        f_react_normal  = np.dot(acting_force, self.e_normal) * self.e_normal 
+
+        ### computes forces tangent to forces ",
+        f_act_tangent = np.dot(acting_force, self.e_tangent) * self.e_tangent 
+        if np.linalg.norm(f_act_tangent) > np.linalg.norm(self.static_friction * f_react_normal): 
+            f_react_tangent = np.linalg.norm(self.kinetic_friction * f_react_normal) * self.e_tangent 
+         
+        else: 
+            f_react_tangent = - f_act_tangent
+
+        return f_react_tangent, f_react_normal
+
+    
+def VelocityVerlet(T, cart, F=None): 
+
+    Δt = T[1] - T[0]
+
+    if F is None:
+        F = np.zeros((len(T),3))
+
+    x_t = np.zeros((len(T),3))
+    v_t = np.zeros((len(T),3))
+
+    x_t[0] = cart.position
+    v_t[0] = cart.velocity
+    a_told = np.zeros(3)
+    for t in range(len(T)-1):
+        x_t[t+1] = x_t[t] + v_t[t] * Δt + 0.5 * a_told * (Δt*Δt) 
+
+        f_react_tangent, f_react_normal = cart.force_response(F[t])
+        a_tnew  = (F[t] + f_react_tangent + f_react_normal) / cart.mass
+
+        v_t[t+1]  = v_t[t] + 0.5 * (a_told + a_tnew) * Δt 
+
+    return x_t, v_t 
+
+Δt = 0.01 ### s(detector)
+t0 = 0 
+tf = 1
+
+timeline = np.arange(t0,tf,Δt)
+
+block1 = body()
+
+block1.position = np.array([3.14, 3.14, 0.])
+block1.velocity = np.array([0.,0., 0.])
+
+block1.on_ramp(Θ = 0.0, static_friction=5, kinetic_friction=0.0)
+
+F_t = np.zeros((len(timeline),3))
+F_t[62:88] = 0.0
+F_t[22:38] = 0.001
+
+xA_t, vA_t = VelocityVerlet(timeline, block1, F=F_t)
+
+plt.scatter(timeline, xA_t[:,0])
+plt.title("Motion with Constant Velocity")
+plt.xlabel("Time (s)")
+plt.ylim([3,4])
+plt.ylabel("Position (m)")
+plt.show()
+
+plt.scatter(timeline, F_t[:,0])
+plt.title("Motion with Constant Acceleration")
+plt.xlabel("Time (s)")
+plt.ylabel("Force (N)")
+plt.show()
+
