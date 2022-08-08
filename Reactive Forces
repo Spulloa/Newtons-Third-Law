@@ -103,3 +103,134 @@ plt.xlabel("Time (s)")
 plt.ylabel("Force (N)")
 plt.show()
 
+## Compare Kinetic Friction to Free Fall
+## Find when motion occurs (μ_s, Θ)
+## Show that when static force vectors cancel
+
+# Block Object 1
+
+block1 = body()
+
+block1.position = np.array([3.14, 0., 0.])
+block1.velocity = np.array([0.00, 0., 0.])
+
+block1.on_ramp(Θ = 10.0, static_friction=0.5, kinetic_friction=0.2)
+
+Fg_t = np.array([0.,-9.81,0.])
+
+f_react_tangent, f_react_normal = block1.force_response(Fg_t)
+
+a_net = f_react_tangent + f_react_normal + Fg_t
+print(a_net)
+np.linalg.norm(a_net)
+
+Θs = np.linspace(0,90,100)
+μss = np.linspace(0,1,50)
+
+a_Θμ = np.zeros((len(Θs),len(μss)))
+for i in range(len(Θs)):
+  for j in range(len(μss)):
+    block1 = body()
+
+    block1.position = np.array([3.14, 0., 0.])
+    block1.velocity = np.array([0.00, 0., 0.])
+
+    block1.on_ramp(Θ = Θs[i], static_friction= μss[j], kinetic_friction=0.0)
+
+    Fg_t = np.array([0.,-9.81,0.])
+
+    f_react_tangent, f_react_normal = block1.force_response(Fg_t)
+
+    a_net = f_react_tangent + f_react_normal + Fg_t
+
+    a_Θμ[i][j] = np.linalg.norm(a_net)
+
+x = Θs
+y = μss
+
+X, Y = np.meshgrid(x, y)
+Z = a_Θμ.T
+
+plt.pcolormesh(Y,X,Z, shading='auto')
+plt.title('Acceleration on a ramp with Friction')
+plt.xlabel('Static Friction Coefficient')
+plt.ylabel('Angle(degrees)')
+plt.colorbar()
+plt.show()
+
+Θs = np.linspace(0,90,100)
+μss = np.linspace(0,60,50)
+
+a_Θμ = np.zeros((len(Θs),len(μss)))
+for i in range(len(Θs)):
+  for j in range(len(μss)):
+    block1 = body()
+
+    block1.position = np.array([3.14, 0., 0.])
+    block1.velocity = np.array([0.00, 0., 0.])
+
+    block1.on_ramp(Θ = Θs[i], static_friction= μss[j], kinetic_friction=0.)
+
+    Fg_t = np.array([0.,-9.81,0.])
+
+    f_react_tangent, f_react_normal = block1.force_response(Fg_t)
+
+    a_net = f_react_tangent + f_react_normal + Fg_t
+
+    a_Θμ[i][j] = np.linalg.norm(a_net)
+
+x = Θs
+y = μss
+
+X, Y = np.meshgrid(x, y)
+Z = a_Θμ.T
+
+plt.pcolormesh(Y,X,Z, shading='auto')
+plt.title('Acceleration on a ramp with Friction')
+plt.xlabel('Static Friction Coefficient')
+plt.ylabel('Angle(degrees)')
+plt.colorbar()
+plt.show()
+
+block1 = body()
+
+block1.position = np.array([3.14, 0., 0.])
+block1.velocity = np.array([-2.0 , 0., 0.])
+
+block1.on_ramp(Θ = 30.0, static_friction=0.5, kinetic_friction=0.4)
+
+Fg_t = np.zeros((len(timeline),3))
+Fg_t[:,1] = -9.81
+
+xA_t, vA_t = VelocityVerlet(timeline, block1, F=Fg_t)
+
+dvA = np.gradient(vA_t, axis=0)/Δt
+
+plt.scatter(timeline, xA_t[:,0])
+plt.title("Motion with Constant Velocity")
+plt.xlabel("Time (s)")
+#plt.ylim([,])
+plt.ylabel("Position (m)")
+plt.show()
+
+plt.scatter(timeline, vA_t[:,0])
+plt.title("Motion with Constant Velocity")
+plt.xlabel("Time (s)")
+plt.ylabel("Velocity (m/s)")
+plt.show()
+
+plt.scatter(timeline, dvA[:,0] + dvA[:,1])
+plt.title("Motion with Constant Acceleration")
+plt.xlabel("Time (s)")
+plt.ylabel("x-Accerlation (m/s^2)")
+plt.show()
+
+np.linalg.norm(np.dot(Fg_t[0], block1.e_tangent) * block1.e_tangent + np.linalg.norm( 0.4 * block1.f_react_normal ) * block1.e_tangent)
+print(  np.dot(Fg_t[0], block1.e_tangent) * block1.e_tangent  )
+print( "acceleration: " + str(  np.linalg.norm( np.dot(Fg_t[0], block1.e_tangent) * block1.e_tangent )  ) + " m/s^2" )
+
+np.linalg.norm( 0.4 * block1.f_react_normal ) * block1.e_tangent
+print( "acceleration from vectors: " + str(  np.linalg.norm( np.dot(Fg_t[0], block1.e_tangent) * block1.e_tangent + np.linalg.norm( 0.4 * block1.f_react_normal ) * block1.e_tangent ) ) + " m/s^2" )
+print( "acceleration from graph  : " + str(2*np.linalg.norm(dvA[46])) + "  m/s^2"  )
+
+
